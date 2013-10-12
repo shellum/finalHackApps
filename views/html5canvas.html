@@ -15,11 +15,28 @@
     var canvasWidth = 500;
     var canvasHeight = 200;
 
-    var buttons = [
-        createRandomButtonData(1),
-        createRandomButtonData(2),
-        createRandomButtonData(3)
-    ];
+    function Color(r, g, b, a) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+
+    function Button() {
+        this.lightBorderColor = new Color(240,240,255,255);
+        this.darkBorderColor = new Color(100,100,120,255);
+        this.textColor = new Color(20,20,20,255);
+        this.backgroundColor = new Color(200,200,220,255);
+        this.width = 70;
+        this.height = 30;
+        this.fontSize = 12;
+        this.font = "" + this.fontSize + "px Times";
+    }
+
+    var buttons = [];
+    for (i=0;i<5;i++) {
+        buttons[i] = createRandomButtonData(i);
+    }
 
     var canvas = document.getElementById('canvas');
     canvas.width = canvasWidth;
@@ -29,13 +46,12 @@
     var context = canvas.getContext('2d');
 
     function createRandomButtonData(id) {
-        return {
-            x: r(canvasWidth) - 70,
-            y: r(canvasHeight) - 30,
-            width: 70,
-            height: 30,
-            text: 'Go #' + id
-        }
+        var button = new Button();
+        button.x = r(canvasWidth - button.width);
+        button.y = r(canvasHeight - button.height);
+        button.text = 'Go #' + id;
+
+        return button;
     }
 
     canvas.addEventListener('mousemove', function(event) {
@@ -44,19 +60,23 @@
         y = event.clientY - canvasCoords.top;
         $('#x1').html('Coords: ' + y + ',');
         $('#y1').html(y);
-        overButton = false;
+        overButton = -1;
         for (i=0;i<buttons.length;i++)
         if (x > buttons[i].x && x < (buttons[i].x + buttons[i].width) &&
             y > buttons[i].y && y < (buttons[i].y + buttons[i].height)) {
-            overButton = i+1;
+            overButton = i;
         }
-        $('#over').html("Over button: "+overButton);
+
+        if (overButton >=0 )
+            $('#over').html("Over button: "+overButton);
+        else
+            $('#over').html("Over button: -");
     });
 
     canvas.addEventListener('mousedown', function(event) {
         console.log(event.clientX);
         hit = false;
-        if (overButton) {
+        if (overButton >= 0) {
             hit=true;
             alert('Clicked on canvas button #'+overButton);
         }
@@ -64,7 +84,7 @@
     });
 
     function plotPixel(x,y,r,g,b) {
-        context.fillStyle = createFillStyle(r,g,b,255);
+        context.fillStyle = createFillStyle(new Color(r, g, b, 255));
         context.fillRect( x, y, 1, 1 );
     }
 
@@ -72,34 +92,33 @@
         return Math.random() * max;
     }
 
-    function createFillStyle(r, g, b, a) {
-        return 'rgba('+r+','+g+','+b+','+a+')';
+    function createFillStyle(color) {
+        return 'rgba('+color.r+','+color.g+','+color.b+','+color.a+')';
     }
 
-    function hLine(fromX, fromY, width, thickness, r, b, g, a) {
-        context.fillStyle = createFillStyle(r,b,g,a);
+    function hLine(fromX, fromY, width, thickness, color) {
+        context.fillStyle = createFillStyle(color);
         context.fillRect(fromX, fromY, width, thickness);
     }
 
-    function vLine(fromX, fromY, height, thickness, r, b, g, a) {
-        context.fillStyle = createFillStyle(r,b,g,a);
+    function vLine(fromX, fromY, height, thickness, color) {
+        context.fillStyle = createFillStyle(color);
         context.fillRect(fromX, fromY, thickness, height);
     }
 
     function createButton(button) {
         border = 1;
-        fontSize = 12;
         textHangCorrection = 0.8;
-        hLine(button.x,button.y,button.width,border,240,240,255,255);
-        vLine(button.x,button.y,button.height, border,200,200,220,255);
-        hLine(button.x, button.y+button.height-1, button.width, border, 100,100,120,255);
-        vLine(button.x+button.width-1, button.y, button.height, border, 100,100,120,255);
-        context.fillStyle = createFillStyle(200,200,220,255);
+        hLine(button.x,button.y,button.width,border,button.lightBorderColor);
+        vLine(button.x,button.y,button.height, border,button.lightBorderColor);
+        hLine(button.x, button.y+button.height-1, button.width, border, button.darkBorderColor);
+        vLine(button.x+button.width-1, button.y, button.height, border, button.darkBorderColor);
+        context.fillStyle = createFillStyle(button.backgroundColor);
         context.fillRect(button.x+border, button.y+border, button.width-(border*2), button.height-(border*2));
-        context.fillStyle = createFillStyle(20,20,20,255);
-        context.font = ""+fontSize+"px Times";
+        context.fillStyle = createFillStyle(button.textColor);
+        context.font = button.font;
         var textMetrics = context.measureText(button.text);
-        context.fillText(button.text, button.x  + ((button.width - textMetrics.width)/2),button.y+(fontSize * textHangCorrection) + ((button.height-fontSize)/2));
+        context.fillText(button.text, button.x  + ((button.width - textMetrics.width)/2),button.y+(button.fontSize * textHangCorrection) + ((button.height-button.fontSize)/2));
     }
 
     function drawCanvasBackground() {
