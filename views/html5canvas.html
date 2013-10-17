@@ -5,16 +5,36 @@
 </head>
 <body>
     <canvas id='canvas' style="border:1px solid grey;"></canvas>
-    <br>
-    <span id="x1"></span><span id="y1"></span>
-    <br>
-    <span id="over"></span>
-    <br>
-    <span id="hit"></span>
+    <div><span id="x"></span><span id="y"></span></div>
+    <div id="over"></div>
+    <div id="hit"></div>
 <script>
+    // Initialize everything
     var canvasWidth = 500;
-    var canvasHeight = 200;
+    var canvasHeight = 300;
+    var numberOfButtons = 5;
+    var canvas = document.getElementById('canvas');
+    var canvasCoords = canvas.getBoundingClientRect();
+    var context = canvas.getContext('2d');
+    var buttons = [];
+    var overButton = false;
+    var noButton = -1;
 
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    for (i=0;i<numberOfButtons;i++) {
+        buttons[i] = createRandomButtonData(i);
+    }
+
+    // Draw the background
+    drawCanvasBackground();
+
+    // Draw the buttons
+    for (i=0;i<buttons.length;i++)
+        createButton(buttons[i]);
+
+    // A color object
     function Color(r, g, b, a) {
         this.r = r;
         this.g = g;
@@ -22,52 +42,20 @@
         this.a = a;
     }
 
-    function Button() {
-        this.lightBorderColor = new Color(240,240,255,255);
-        this.darkBorderColor = new Color(100,100,120,255);
-        this.textColor = new Color(20,20,20,255);
-        this.backgroundColor = new Color(200,200,220,255);
-        this.width = 70;
-        this.height = 30;
-        this.fontSize = 12;
-        this.font = "" + this.fontSize + "px Times";
-    }
-
-    var buttons = [];
-    for (i=0;i<5;i++) {
-        buttons[i] = createRandomButtonData(i);
-    }
-
-    var canvas = document.getElementById('canvas');
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    overButton = false;
-    var canvasCoords = canvas.getBoundingClientRect();
-    var context = canvas.getContext('2d');
-
-    function createRandomButtonData(id) {
-        var button = new Button();
-        button.x = r(canvasWidth - button.width);
-        button.y = r(canvasHeight - button.height);
-        button.text = 'Go #' + id;
-
-        return button;
-    }
-
     canvas.addEventListener('mousemove', function(event) {
         console.log(event.clientX);
         x = event.clientX - canvasCoords.left;
         y = event.clientY - canvasCoords.top;
-        $('#x1').html('Coords: ' + y + ',');
-        $('#y1').html(y);
-        overButton = -1;
+        $('#x').html('Coords: ' + y + ',');
+        $('#y').html(y);
+        overButton = noButton;
         for (i=0;i<buttons.length;i++)
         if (x > buttons[i].x && x < (buttons[i].x + buttons[i].width) &&
             y > buttons[i].y && y < (buttons[i].y + buttons[i].height)) {
             overButton = i;
         }
 
-        if (overButton >=0 )
+        if (overButton >= 0)
             $('#over').html("Over button: "+overButton);
         else
             $('#over').html("Over button: -");
@@ -88,10 +76,12 @@
         context.fillRect( x, y, 1, 1 );
     }
 
+    // A code shortener function
     function r(max) {
         return Math.random() * max;
     }
 
+    // Parse a color into a Canvas fillStyle
     function createFillStyle(color) {
         return 'rgba('+color.r+','+color.g+','+color.b+','+color.a+')';
     }
@@ -106,9 +96,12 @@
         context.fillRect(fromX, fromY, thickness, height);
     }
 
+    // Draw a button
     function createButton(button) {
-        border = 1;
-        textHangCorrection = 0.8;
+        var border = 1;
+        var textHangCorrection = 0.8;
+        var textMetrics = context.measureText(button.text);
+
         hLine(button.x,button.y,button.width,border,button.lightBorderColor);
         vLine(button.x,button.y,button.height, border,button.lightBorderColor);
         hLine(button.x, button.y+button.height-1, button.width, border, button.darkBorderColor);
@@ -117,19 +110,35 @@
         context.fillRect(button.x+border, button.y+border, button.width-(border*2), button.height-(border*2));
         context.fillStyle = createFillStyle(button.textColor);
         context.font = button.font;
-        var textMetrics = context.measureText(button.text);
         context.fillText(button.text, button.x  + ((button.width - textMetrics.width)/2),button.y+(button.fontSize * textHangCorrection) + ((button.height-button.fontSize)/2));
     }
 
+    // A HTML5 Button object
+    function Button() {
+        this.lightBorderColor = new Color(240,240,255,255);
+        this.darkBorderColor = new Color(100,100,120,255);
+        this.textColor = new Color(20,20,20,255);
+        this.backgroundColor = new Color(200,200,220,255);
+        this.width = 70;
+        this.height = 30;
+        this.fontSize = 12;
+        this.font = "" + this.fontSize + "px Times";
+    }
+
+    function createRandomButtonData(id) {
+        var button = new Button();
+        button.x = r(canvasWidth - button.width);
+        button.y = r(canvasHeight - button.height);
+        button.text = 'Go #' + id;
+        return button;
+    }
+
+    // Draw a gradient background
     function drawCanvasBackground() {
         for (x=0;x<canvasWidth;x++)
             for (y=0;y<canvasHeight;y++)
-                plotPixel(x,y,x,x-y,y);
+                plotPixel(x,y,y+i,y-x,x-y);
     }
-
-    drawCanvasBackground();
-    for (i=0;i<buttons.length;i++)
-        createButton(buttons[i]);
 
 </script>
 </body>
